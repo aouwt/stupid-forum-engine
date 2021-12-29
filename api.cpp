@@ -1,13 +1,15 @@
+#include "types.hpp"
+#include "db.hpp"
+#include "common.hpp"
+#include <stdlib.h>
+#include <string.h>
 #include <cgi.h>
 
-#define ERR(c,str) \
-	if ((c)) cgi_fatal ("Error: "#str);;
+bool cgi_is_init = false;
 
 int main (void) {
-	if (cgi_init ()) {
-		puts ("Error: cgi_init");
-		return 1;
-	}
+	ERR (cgi_init (), "cgi_init");
+	cgi_is_init = true;
 	
 	char *method = getenv ("REQUEST_METHOD");
 	ERR (method == NULL, "REQUEST_METHOD is undefined.");
@@ -15,21 +17,21 @@ int main (void) {
 	char *action = cgi_param ("act");
 	ERR (action == NULL, "'act' parameter missing");
 	
-	if (method == "GET") {
+	if (!strcmp (method, "GET")) {
 	
-		if (action == "post")
+		if (!strcmp (action, "post"))
 			action::get_post ();
 		else
 		
-		if (action == "user")
+		if (!strcmp (action, "user"))
 			action::get_user ();
 		else
 			cgi_fatal ("Unknown action for GET");
 		
 	} else
-	if (method == "POST") {
+	if (!strcmp (method, "POST")) {
 		
-		if (action == "post")
+		if (!strcmp (action, "post"))
 			action::post_post ();
 		else
 			cgi_fatal ("Unknown action for POST");
