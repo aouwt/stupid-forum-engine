@@ -9,8 +9,9 @@
 #define USER_URL_END ""
 
 void datestr (time_t d, char** c) {
-	return;
+	
 }
+
 void html::renderpost (post* p) {
 	printf ("<p><h1><a href=\"%s%i%s\">%s</a></h1> by <a href=\"%s%s%s\">%s</a></p>",
 		POST_URL_BEGIN, p -> id, POST_URL_END,
@@ -47,9 +48,11 @@ void html::renderuser (user* u) {
 	for (;;) {
 		switch (sqlite3_step (stmt)) {
 			case SQLITE_ROW:
-				printf 9datestr (sqlite3_column_int64 (stmt, 1))
-				(char*) sqlite3_column_text (stmt, 2);
-				(char*) sqlite3_column_text (stmt, 3);
+				printf ("<div><i>%s</i><h2><a href=\"%s%i%s\">%s</a></h2></div>",
+					datestr (sqlite3_column_int64 (stmt, 1)),
+					POST_URL_BEGIN, sqlite3_column_int (stmt, 0), POST_URL_END,
+					sqlite3_column_text (stmt, 2)
+				);
 				break;
 			
 			case SQLITE_DONE:
