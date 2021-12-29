@@ -26,6 +26,7 @@
 		time_t date;
 		char *title = NULL;
 		char *body = NULL;
-		author *author = NULL;
+		authorid_t author_id;
+		author* author = NULL;
 	} post;
 #endif
