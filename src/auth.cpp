@@ -95,7 +95,33 @@ salt_t auth::mksalt (void) {
 
 
 err_t auth::checkpass (userid_t user, const char* pass) {
+	sqlite3_stmt *stmt;
 	
+	if (sqlite3_prepare_v2 (db::sqldb, "SELECT hash, salt FROM passwords WHERE user = ?;", -1, &stmt, NULL))
+		return 1;
+	
+	if (sqlite3_bind_int (stmt, 1, user))
+		return 2;
+	
+	if (sqlite3_step (stmt) != SQLITE_ROW)
+		return -1;
+	
+	char* chash = (char*) sqlite3_column_text (stmt, 1);
+	salt_t *salt = (salt_t*) sqlite3_column_text (stmt, 2);
+	
+	hash_t otherhash;
+	
+	if (mkhash (salt, pass, otherhash))
+		return 3;
+	
+	// Compare hashes
+	for (size_t i = 0; i != LEN (otherhash); i ++) {
+		if (chash [i] != otherhash [i])
+			return -2;
+	}
+	return 0;
+	
+	sqlite3_finalize (stmt);
 }
 
 
@@ -103,11 +129,11 @@ err_t auth::checkpass (userid_t user, const char* pass) {
 err_t auth::mkhash (salt_t* salt, const char* pass, hash_t hash) {
 	return argon2i_hash_raw (
 		4,	// time cost
-		12,	// memory cost
+		13,	// memory cost
 		1,	// parallelism
-		pass, sizeof (char) * strlen (pass),
-		salt, sizeof (salt_t),
-		hash, sizeof (hash_t)
+		(const void*) pass, sizeof (char) * strlen (pass) + 1,
+		(const void*) salt, sizeof (salt_t),
+		(void*) hash, sizeof (hash_t)
 	);
 }
 
@@ -115,7 +141,7 @@ err_t auth::mkhash (salt_t* salt, const char* pass, hash_t hash) {
 err_t auth::adduserpass (userid_t user, const char* pass) {
 
 	salt_t salt = auth::mksalt ();
-	hash_t phash; auth::mkhash (&salt, pass, phash);
+	hash_t phash; if (auth::mkhash (&salt, pass, phash)) return 6;
 	
 	
 	sqlite3_stmt* stmt;
@@ -126,10 +152,10 @@ err_t auth::adduserpass (userid_t user, const char* pass) {
 	if (sqlite3_bind_int (stmt, 1, user))
 		return 2;
 	
-	if (sqlite3_bind_text (stmt, 2, phash, sizeof (hash_t), SQLITE_STATIC))
+	if (sqlite3_bind_text (stmt, 2, (const char*) phash, LEN (phash), SQLITE_STATIC))
 		return 3;
 	
-	if (sqlite3_bind_text (stmt, 3, (const char*) &salt, sizeof (salt_t), SQLITE_STATIC))
+	if (sqlite3_bind_text (stmt, 3, (const char*) &salt, sizeof (salt) / sizeof (const char), SQLITE_STATIC))
 		return 4;
 	
 	if (sqlite3_step (stmt) != SQLITE_DONE)

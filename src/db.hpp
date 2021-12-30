@@ -6,12 +6,15 @@
 	
 	namespace db {
 		extern err_t init (void);
-		extern err_t deinit (void);
+		extern void deinit (void);
 		
 		extern err_t get_post (postid_t, post*);
 		extern err_t get_user (userid_t, user*);
+		extern err_t get_userid (const char*, userid_t*);
 		
 		extern err_t get_post2 (postid_t, post*);
+		
+		extern err_t newuser (const char*, userid_t*);
 		
 		extern void free_strs (void);
 		

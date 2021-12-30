@@ -2,22 +2,23 @@
 #include "db.hpp"
 #include "common.hpp"
 #include "html.hpp"
+#include "auth.hpp"
 #include <stdlib.h>
 #include <string.h>
 #include <cgi.h>
 
-#define ERR(c,str) \
-	if ((c)) ERROR (str);
-
 bool cgi_is_init = false;
 
 
-void ERROR (const char* msg) {
-	if (cgi_is_init)
-		cgi_fatal (msg);
-	else {
-		fprintf (stderr, "\n\n%s\n", msg);
-		exit (1);
+void ERR (err_t id, const char* msg) {
+	if (id) {
+		if (cgi_is_init) {
+			printf ("\nERROR: %i\n", id);
+			cgi_fatal (msg);
+		} else {
+			fprintf (stdout, "\n\n%i\n%s\n", id, msg);
+			exit (1);
+		}
 	}
 }
 
@@ -61,9 +62,25 @@ namespace action {
 	}
 	
 	void login_user (void) {
-		char *username = cgi_param ("uname");
-		char *password = cgi_param ("pass");
+		char *username = cgi_param ("uname"); ERR (username == NULL, "Missing username");
+		char *password = cgi_param ("password"); ERR (password == NULL, "Missing password");
 		
+		char *newacc = cgi_param ("new"); if (newacc == NULL) newacc = "";
+		
+		if (!strcmp (newacc, "on")) {
+			userid_t u;
+			
+			ERR (db::newuser (username, &u), "User already exists");
+			ERR (auth::adduserpass (u, password), "General error: auth::adduserpass");
+		} else {
+			userid_t u;
+			
+			ERR (db::get_userid (username, &u), "Incorrect username");
+			ERR (auth::checkpass (u, password), "Incorrect password");
+			
+			printf ("Login successful (no token generated)\n");
+			
+		}
 	}
 }
 
@@ -108,5 +125,7 @@ int main (void) {
 	
 	} else
 		cgi_fatal ("Unknown method");
+	
+	db::deinit ();
 		
 }
