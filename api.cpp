@@ -59,6 +59,12 @@ namespace action {
 		
 		db::free_strs ();
 	}
+	
+	void login_user (void) {
+		char *username
+		char *pass = cgi_param ("pass");
+		
+	}
 }
 
 int main (void) {
@@ -89,9 +95,9 @@ int main (void) {
 	} else
 	if (!strcmp (method, "POST")) {
 		
-		//if (!strcmp (action, "post"))
-			//action::post_post ();
-		//else
+		if (!strcmp (action, "login"))
+			action::login_user ();
+		else
 			cgi_fatal ("Unknown action for POST");
 	
 	} else
