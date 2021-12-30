@@ -129,7 +129,7 @@ err_t auth::adduserpass (userid_t user, const char* pass) {
 	if (sqlite3_bind_text (stmt, 2, phash, sizeof (hash_t), SQLITE_STATIC))
 		return 3;
 	
-	if (sqlite3_bind_text (stmt, 3, salt, sizeof (salt_t), SQLITE_STATIC))
+	if (sqlite3_bind_text (stmt, 3, (const char*) &salt, sizeof (salt_t), SQLITE_STATIC))
 		return 4;
 	
 	if (sqlite3_step (stmt) != SQLITE_DONE)

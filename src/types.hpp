@@ -17,7 +17,7 @@
 	
 	// thx palaiologos
 	using token_t = std::array <std::uint64_t, 2>;
-	using salt_t = std::array <std::char, 20>;
+	using salt_t = std::array <char, 20>;
 	
 	typedef s8 err_t;
 

@@ -16,7 +16,7 @@ void ERROR (const char* msg) {
 	if (cgi_is_init)
 		cgi_fatal (msg);
 	else {
-		fprintf (stdout, "\n\n%s\n", msg);
+		fprintf (stderr, "\n\n%s\n", msg);
 		exit (1);
 	}
 }
@@ -61,8 +61,8 @@ namespace action {
 	}
 	
 	void login_user (void) {
-		char *username
-		char *pass = cgi_param ("pass");
+		char *username = cgi_param ("uname");
+		char *password = cgi_param ("pass");
 		
 	}
 }
@@ -78,10 +78,9 @@ int main (void) {
 	char *method = getenv ("REQUEST_METHOD");
 	ERR (method == NULL, "REQUEST_METHOD is undefined");
 	
-	char *action = cgi_param ("act");
-	ERR (action == NULL, "'act' parameter missing");
-	
 	if (!strcmp (method, "GET")) {
+		char *action = cgi_param ("act");
+		ERR (action == NULL, "'act' parameter missing");
 	
 		if (!strcmp (action, "post"))
 			action::get_post ();
@@ -94,11 +93,18 @@ int main (void) {
 		
 	} else
 	if (!strcmp (method, "POST")) {
+		char *query = getenv ("QUERY_STRING");
+		
+		char *action = new char [strlen (query)];
+		ERR (sscanf (query, "act=%s", action) == EOF, "Syntax error");
+		
 		
 		if (!strcmp (action, "login"))
 			action::login_user ();
 		else
 			cgi_fatal ("Unknown action for POST");
+		
+		delete[] action;
 	
 	} else
 		cgi_fatal ("Unknown method");

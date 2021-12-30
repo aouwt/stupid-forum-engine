@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+	<head></head>
+	<body>
+		<h1>Login</h1>
+		<form action="/cgi-bin/fourm.cgi?act=login" method=post>
+			<label for="uname">Username</label>
+			<input type="text" name="uname" id="uname" required=required></input>
+			
+			<label for="pass">Password</label>
+			<input type="password" name="password" id="pass" required=required></input>
+			
+			<input type="checkbox" name="new" id="newacc"></input>
+			<label for="newacc">Make a new account</label>
+			
+			<input id="submit" type="submit">Log in</input>
+		</form>
+	</body>
+</html>
