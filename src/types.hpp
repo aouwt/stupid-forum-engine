@@ -14,7 +14,7 @@
 	typedef s16 postid_t;
 	typedef u16 userid_t;
 	
-	typedef char hash_t [HASHLEN + 1];
+	typedef char hash_t [HASHSIZE + 1];
 	
 	// thx palaiologos
 	using token_t = std::array <std::uint64_t, 2>;

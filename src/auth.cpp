@@ -89,10 +89,12 @@ auth_user auth::authuser (userid_t user) {
 
 salt_t auth::mksalt (void) {
 	salt_t s;
-	for (size_t i = 0; i != SALTLEN; i ++)
+	/*for (size_t i = 0; i != SALTLEN; i ++)
 		s [i] = ((rand.randi () % (127 - 32)) + 32);
 
 	s [SALTLEN] = '\0';
+	*/
+	rand.rand (sizeof (salt_t), &s);
 	return s;
 }
 
@@ -100,7 +102,7 @@ salt_t auth::mksalt (void) {
 err_t auth::checkpass (userid_t user, const char* pass) {
 	sqlite3_stmt *stmt;
 	
-	if (sqlite3_prepare_v2 (db::sqldb, "SELECT hash, salt FROM passwords WHERE user = ?;", -1, &stmt, NULL))
+	if (sqlite3_prepare_v2 (db::sqldb, "SELECT hash FROM passwords WHERE user = ?;", -1, &stmt, NULL))
 		return 1;
 	
 	if (sqlite3_bind_int (stmt, 1, user))
@@ -109,19 +111,8 @@ err_t auth::checkpass (userid_t user, const char* pass) {
 	if (sqlite3_step (stmt) != SQLITE_ROW)
 		return -1;
 	
-	char* chash = (char*) sqlite3_column_text (stmt, 1);
-	salt_t *salt = (salt_t*) sqlite3_column_text (stmt, 2);
-	
-	hash_t otherhash;
-	
-	if (mkhash (salt, pass, otherhash))
-		return 3;
-	
-	// Compare hashes
-	for (size_t i = 0; i != HASHLEN; i ++) {
-		if (chash [i] != otherhash [i])
-			return -2;
-	}
+	char* correcthash = (char*) sqlite3_column_text (stmt, 1);
+
 	return 0;
 	
 	sqlite3_finalize (stmt);
@@ -130,29 +121,22 @@ err_t auth::checkpass (userid_t user, const char* pass) {
 
 
 err_t auth::mkhash (salt_t* salt, const char* pass, hash_t hash) {
-	u8 actual_hash [HASHLEN / 2]; // 1 actual hash segment in 2 hash_t elements
-	
-	if (argon2i_hash_raw (
-				5,	// time cost
-				8192,	// memory cost
-				1,	// parallelism
-				pass, sizeof (char) * strlen (pass),
-				salt, sizeof (salt_t),
-				actual_hash, sizeof (actual_hash)
-			))
-		return 1;
-	
-	for (size_t i = 0; i != (HASHLEN / 2); i ++)
-		sprintf (&hash [i * 2], "%0hx", actual_hash [i]);
-	
-	return 0;
+	return argon2i_hash_encoded (
+		5,	// time cost
+		8192,	// memory cost
+		1,	// parallelism
+		pass, sizeof (char) * strlen (pass),
+		salt, sizeof (salt_t),
+		HASHSIZE,
+		hash, HASHLEN * sizeof (char)
+	);
 }
 
 
 err_t auth::adduserpass (userid_t user, const char* pass) {
 
 	salt_t salt = auth::mksalt ();
-	hash_t phash; if (auth::mkhash (&salt, pass, phash)) return 6;
+	hash_t phash; return (auth::mkhash (&salt, pass, phash)) ;return 6;
 	
 	
 	sqlite3_stmt* stmt;
@@ -163,14 +147,11 @@ err_t auth::adduserpass (userid_t user, const char* pass) {
 	if (sqlite3_bind_int (stmt, 1, user))
 		return 2;
 	
-	if (sqlite3_bind_text (stmt, 2, (const char*) phash, sizeof (hash_t), SQLITE_STATIC))
+	if (sqlite3_bind_text (stmt, 2, (const char*) phash, strlen (phash) * sizeof (char), SQLITE_STATIC))
 		return 3;
 	
-	if (sqlite3_bind_text (stmt, 3, (const char*) &salt, sizeof (salt_t), SQLITE_STATIC))
-		return 4;
-	
 	if (sqlite3_step (stmt) != SQLITE_DONE)
-		return 5;
+		return 4;
 	
 	sqlite3_finalize (stmt);
 	return 0;

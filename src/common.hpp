@@ -6,7 +6,8 @@
 	
 	#define LEN(x) (sizeof (x) / sizeof (x [0]))
 	
-	#define HASHLEN 20
+	#define HASHLEN 60
 	#define SALTLEN 20
+	#define HASHSIZE 20
 	
 #endif
