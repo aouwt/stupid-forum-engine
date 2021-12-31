@@ -1,5 +1,6 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
+	#include "common.hpp"
 	#include <cstddef>
 	#include <cstdint>
 	#include <time.h>
@@ -13,11 +14,11 @@
 	typedef s16 postid_t;
 	typedef u16 userid_t;
 	
-	typedef char hash_t [20];
+	typedef char hash_t [HASHLEN + 1];
 	
 	// thx palaiologos
 	using token_t = std::array <std::uint64_t, 2>;
-	using salt_t = std::array <char, 20>;
+	using salt_t = std::array <char, SALTLEN + 1>;
 	
 	typedef s8 err_t;
 
